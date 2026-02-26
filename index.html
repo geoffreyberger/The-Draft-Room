@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Mock Draft Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;600;700&family=Instrument+Sans:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --midnight:#06101e; --red:#c8102e; --gold:#d4a847; --cream:#f0ebe1; --muted:#7a8fa8;
+    --card:#0f1e32; --border:#1a2e48; --teal:#3ecfc6; --green:#2db34f;
+    --orange:#e07b30; --purple:#9b72cf;
+    --nhl-blue:#1e90ff; --nba-orange:#f07d22;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--midnight); color:var(--cream); font-family:'Instrument Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
+  body::before {
+    content:''; position:fixed; inset:0; z-index:200; pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); opacity:.45;
+  }
+  /* ── TAB NAV ── */
+  .tab-nav { position:sticky; top:0; z-index:300; display:flex; justify-content:center; border-bottom:1px solid var(--border); background:rgba(6,16,30,0.97); backdrop-filter:blur(12px); overflow-x:auto; }
+  .tab-btn { flex:0 0 auto; min-width:120px; max-width:220px; display:flex; align-items:center; justify-content:center; gap:8px; padding:14px 20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); border:none; background:none; cursor:pointer; border-bottom:2px solid transparent; transition:color .2s, border-color .2s; white-space:nowrap; }
+  .tab-btn:hover { color:var(--cream); }
+  .tab-btn.active[data-sport="mlb"] { color:var(--red); border-bottom-color:var(--red); }
+  .tab-btn.active[data-sport="nfl"] { color:var(--green); border-bottom-color:var(--green); }
+  .tab-btn.active[data-sport="nhl"] { color:var(--nhl-blue); border-bottom-color:var(--nhl-blue); }
+  .tab-btn.active[data-sport="nba"] { color:var(--nba-orange); border-bottom-color:var(--nba-orange); }
+  .tab-sport { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; line-height:1; }
+  .draft-meta { font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); text-align:center; margin-top:8px; opacity:0.8; }
+  /* ── PANELS ── */
+  .sport-panel { display:none; }
+  .sport-panel.visible { display:block; }
+  /* ── HEADERS ── */
+  header { position:relative; padding:52px 48px 44px; border-bottom:1px solid var(--border); overflow:hidden; }
+  .mlb-header::after  { content:'2026'; position:absolute; right:-10px; top:-24px; font-family:'Bebas Neue',sans-serif; font-size:clamp(150px,22vw,300px); color:rgba(200,16,46,0.055); line-height:1; pointer-events:none; letter-spacing:-4px; }
+  .nfl-header::after  { content:'2026'; position:absolute; right:-10px; top:-24px; font-family:'Bebas Neue',sans-serif; font-size:clamp(150px,22vw,300px); color:rgba(45,179,79,0.05);   line-height:1; pointer-events:none; letter-spacing:-4px; }
+  .nhl-header::after  { content:'2026'; position:absolute; right:-10px; top:-24px; font-family:'Bebas Neue',sans-serif; font-size:clamp(150px,22vw,300px); color:rgba(30,144,255,0.05); line-height:1; pointer-events:none; letter-spacing:-4px; }
+  .nba-header::after  { content:'2026'; position:absolute; right:-10px; top:-24px; font-family:'Bebas Neue',sans-serif; font-size:clamp(150px,22vw,300px); color:rgba(240,125,34,0.05); line-height:1; pointer-events:none; letter-spacing:-4px; }
+  .mlb-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,9vw,110px); line-height:.88; letter-spacing:2px; background:linear-gradient(130deg,var(--cream) 55%,var(--gold) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; }
+  .nfl-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,9vw,110px); line-height:.88; letter-spacing:2px; background:linear-gradient(130deg,var(--cream) 55%,var(--green) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; }
+  .nhl-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,9vw,110px); line-height:.88; letter-spacing:2px; background:linear-gradient(130deg,var(--cream) 55%,var(--nhl-blue) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; }
+  .nba-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,9vw,110px); line-height:.88; letter-spacing:2px; background:linear-gradient(130deg,var(--cream) 55%,var(--nba-orange) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; text-align:center; }
+  /* ── DRAFT BOARD ── */
+  .draft-board { padding:24px 48px 60px; max-width:1360px; margin:0 auto; }
+  .round-header { display:flex; align-items:flex-start; gap:16px; padding:36px 0 14px; margin-top:8px; }
+  .round-label { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; white-space:nowrap; flex-shrink:0; }
+  .round-label.r1   { color:var(--red); }
+  .round-label.rppi { color:var(--teal); }
+  .round-label.rcba { color:var(--gold); }
+  .round-label.nfl-r1 { color:var(--green); }
+  .round-label.nhl-r1 { color:var(--nhl-blue); }
+  .round-label.nba-r1 { color:var(--nba-orange); }
+  .round-line { width:1px; background:var(--border); align-self:stretch; flex-shrink:0; margin:4px 0; }
+  /* ── PICK CARDS ── */
+  .pick { position:relative; overflow:hidden; background:var(--card); border:1px solid transparent; border-radius:4px; margin-bottom:6px; animation:fadeSlide .4s both; transition:border-color .2s, background .2s, transform .18s; }
+  .pick::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--border); transition:background .2s; }
+  .pick:hover { border-color:var(--border); background:#132038; transform:translateX(3px); }
+  /* MLB */
+  .mlb-panel .pick:hover::before { background:var(--red); }
+  .mlb-panel .pick.top-pick { background:linear-gradient(100deg,#142440,var(--card) 60%); }
+  .mlb-panel .pick.r1-pick  { background:linear-gradient(100deg,#1a0a0e,var(--card) 70%); }
+  .mlb-panel .pick.r1-pick::before  { background:rgba(200,16,46,.4) !important; }
+  .mlb-panel .pick.r1-pick:hover::before { background:var(--red) !important; }
+  .mlb-panel .pick.ppi-pick { background:linear-gradient(100deg,#071a1a,var(--card) 70%); }
+  .mlb-panel .pick.ppi-pick::before { background:rgba(62,207,198,.4) !important; }
+  .mlb-panel .pick.ppi-pick:hover::before { background:var(--teal) !important; }
+  .mlb-panel .pick.cb-pick  { background:linear-gradient(100deg,#1b1508,var(--card) 70%); }
+  .mlb-panel .pick.cb-pick::before  { background:rgba(212,168,71,.4) !important; }
+  .mlb-panel .pick.cb-pick:hover::before  { background:var(--gold) !important; }
+  /* NFL */
+  .nfl-panel .pick { background:linear-gradient(100deg,#091a0f,var(--card) 70%); }
+  .nfl-panel .pick::before { background:rgba(45,179,79,.35) !important; }
+  .nfl-panel .pick:hover::before { background:var(--green) !important; }
+  .nfl-panel .pick.top-pick { background:linear-gradient(100deg,#0d2018,var(--card) 55%); }
+  .nfl-panel .pick.top-pick::before { background:rgba(45,179,79,.6) !important; }
+  .nfl-panel .pick.top-pick:hover::before { background:var(--green) !important; }
+  /* NHL */
+  .nhl-panel .pick:hover::before { background:var(--nhl-blue); }
+  .nhl-panel .pick.top-pick { background:linear-gradient(100deg,#061830,var(--card) 60%); }
+  .nhl-panel .pick.top-pick::before { background:rgba(30,144,255,.5) !important; }
+  .nhl-panel .pick.top-pick:hover::before { background:var(--nhl-blue) !important; }
+  .nhl-panel .pick.forfeited-pick { opacity:.45; pointer-events:none; }
+  .nhl-panel .pick.forfeited-pick::before { background:var(--border) !important; }
+  /* NBA */
+  .nba-panel .pick { background:linear-gradient(100deg,#1a0d05,var(--card) 70%); }
+  .nba-panel .pick::before { background:rgba(240,125,34,.35) !important; }
+  .nba-panel .pick:hover::before { background:var(--nba-orange) !important; }
+  .nba-panel .pick.top-pick { background:linear-gradient(100deg,#1e0e03,var(--card) 55%); }
+  .nba-panel .pick.top-pick::before { background:rgba(240,125,34,.6) !important; }
+  .nba-panel .pick.top-pick:hover::before { background:var(--nba-orange) !important; }
+  /* Card layout */
+  .pick-header { display:grid; grid-template-columns:64px 1fr 200px 80px 56px; gap:14px; align-items:center; padding:16px 20px 14px; cursor:pointer; user-select:none; }
+  .pick-num { font-family:'Bebas Neue',sans-serif; font-size:30px; line-height:1; }
+  .mlb-panel .pick-num  { color:var(--red); }
+  .mlb-panel .ppi-pick .pick-num { color:var(--teal); font-size:18px; letter-spacing:1px; }
+  .mlb-panel .cb-pick  .pick-num { color:var(--gold); font-size:18px; letter-spacing:1px; }
+  .mlb-panel .top-pick .pick-num { font-size:38px; }
+  .nfl-panel  .pick-num  { color:var(--green); }
+  .nfl-panel  .top-pick .pick-num { font-size:38px; }
+  .nhl-panel  .pick-num  { color:var(--nhl-blue); }
+  .nhl-panel  .top-pick .pick-num { font-size:38px; }
+  .nba-panel  .pick-num  { color:var(--nba-orange); }
+  .nba-panel  .top-pick .pick-num { font-size:38px; }
+  .player-name { font-family:'DM Serif Display',serif; font-size:18px; color:var(--cream); line-height:1.15; }
+  .player-meta { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+  .team-cell { font-family:'Instrument Sans',sans-serif; font-size:13px; font-weight:600; color:var(--cream); line-height:1.3; text-align:right; }
+  /* Position badges */
+  .position { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; border-radius:50%; font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:1px; }
+  /* MLB */
+  .pos-P  { background:rgba(200,16,46,.14);  color:var(--red);    border:1px solid rgba(200,16,46,.3); }
+  .pos-C  { background:rgba(212,168,71,.12); color:var(--gold);   border:1px solid rgba(212,168,71,.3); }
+  .pos-IF { background:rgba(90,155,255,.1);  color:#7ab3ff;       border:1px solid rgba(90,155,255,.25); }
+  .pos-OF { background:rgba(72,195,110,.1);  color:#6bda92;       border:1px solid rgba(72,195,110,.25); }
+  /* NFL */
+  .pos-QB   { background:rgba(200,16,46,.14);  color:var(--red);    border:1px solid rgba(200,16,46,.3); }
+  .pos-RB   { background:rgba(45,179,79,.12);  color:var(--green);  border:1px solid rgba(45,179,79,.3); }
+  .pos-WR   { background:rgba(90,155,255,.1);  color:#7ab3ff;       border:1px solid rgba(90,155,255,.25); }
+  .pos-TE   { background:rgba(62,207,198,.1);  color:var(--teal);   border:1px solid rgba(62,207,198,.25); }
+  .pos-OL   { background:rgba(212,168,71,.12); color:var(--gold);   border:1px solid rgba(212,168,71,.3); }
+  .pos-EDGE { background:rgba(224,123,48,.12); color:var(--orange); border:1px solid rgba(224,123,48,.3); }
+  .pos-DT   { background:rgba(155,114,207,.12);color:var(--purple); border:1px solid rgba(155,114,207,.3); }
+  .pos-LB   { background:rgba(255,210,80,.1);  color:#f5d060;       border:1px solid rgba(255,210,80,.25); }
+  .pos-CB   { background:rgba(255,120,180,.1); color:#f08abd;       border:1px solid rgba(255,120,180,.25); }
+  .pos-S    { background:rgba(62,207,198,.1);  color:var(--teal);   border:1px solid rgba(62,207,198,.25); }
+  /* NHL */
+  .pos-hC { background:rgba(30,144,255,.14); color:var(--nhl-blue); border:1px solid rgba(30,144,255,.3); }
+  .pos-hW { background:rgba(62,207,198,.12); color:var(--teal);     border:1px solid rgba(62,207,198,.3); }
+  .pos-hD { background:rgba(212,168,71,.12); color:var(--gold);     border:1px solid rgba(212,168,71,.3); }
+  .pos-hG { background:rgba(200,16,46,.14);  color:var(--red);      border:1px solid rgba(200,16,46,.3); }
+  /* NBA */
+  .pos-bPG { background:rgba(45,179,79,.12);  color:var(--green);    border:1px solid rgba(45,179,79,.3); }
+  .pos-bSG { background:rgba(30,144,255,.14); color:var(--nhl-blue); border:1px solid rgba(30,144,255,.3); }
+  .pos-bSF { background:rgba(240,125,34,.12); color:var(--nba-orange); border:1px solid rgba(240,125,34,.3); }
+  .pos-bPF { background:rgba(155,114,207,.12);color:var(--purple);   border:1px solid rgba(155,114,207,.3); }
+  .pos-bC  { background:rgba(200,16,46,.14);  color:var(--red);      border:1px solid rgba(200,16,46,.3); }
+  /* Arrow */
+  .toggle-arrow { width:28px; height:28px; display:flex; align-items:center; justify-content:center; border-radius:50%; border:1px solid var(--border); color:var(--muted); font-size:11px; transition:transform .25s, border-color .2s, color .2s; margin-left:auto; flex-shrink:0; }
+  .mlb-panel .pick.open .toggle-arrow { transform:rotate(180deg); border-color:var(--red);        color:var(--red); }
+  .nfl-panel  .pick.open .toggle-arrow { transform:rotate(180deg); border-color:var(--green);      color:var(--green); }
+  .nhl-panel  .pick.open .toggle-arrow { transform:rotate(180deg); border-color:var(--nhl-blue);   color:var(--nhl-blue); }
+  .nba-panel  .pick.open .toggle-arrow { transform:rotate(180deg); border-color:var(--nba-orange); color:var(--nba-orange); }
+  /* Write-up */
+  .write-up-panel { max-height:0; overflow:hidden; transition:max-height .38s cubic-bezier(.4,0,.2,1); }
+  .write-up-inner { padding:16px 24px 22px 84px; border-top:1px solid var(--border); }
+  .write-up-inner p { font-family:'Instrument Sans',sans-serif; font-size:13.5px; line-height:1.78; color:#a8bcd2; max-width:820px; }
+  .write-up-inner p + p { margin-top:12px; }
+  .write-up-inner em { color:var(--cream); font-style:italic; }
+  .write-up-placeholder { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:1px; font-style:italic; }
+  @keyframes fadeSlide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  /* Footer */
+  footer { border-top:1px solid var(--border); padding:28px 48px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+  footer p { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:1px; }
+  .legend { display:flex; gap:18px; flex-wrap:wrap; }
+  .legend-item { display:flex; align-items:center; gap:6px; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .legend-dot { width:9px; height:9px; border-radius:50%; }
+  @media (max-width:900px) {
+    header, .draft-board, footer { padding-left:20px; padding-right:20px; }
+    .pick-header { grid-template-columns:52px 1fr auto auto; }
+    .write-up-inner { padding-left:20px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="tab-nav">
+  <button class="tab-btn active" data-sport="nfl"><span class="tab-sport">NFL</span><span>Mock Draft</span></button>
+  <button class="tab-btn" data-sport="nba"><span class="tab-sport">NBA</span><span>Mock Draft</span></button>
+  <button class="tab-btn" data-sport="mlb"><span class="tab-sport">MLB</span><span>Mock Draft</span></button>
+  <button class="tab-btn" data-sport="nhl"><span class="tab-sport">NHL</span><span>Mock Draft</span></button>
+</nav>
+
+<!-- MLB -->
+<div class="sport-panel mlb-panel" id="panel-mlb">
+  <header class="mlb-header"><h1 class="mlb-title">Mock<br>2026 MLB<br>Draft</h1><p class="draft-meta">Jul 11–12, 2026 &middot; Philadelphia, PA</p></header>
+  <div class="draft-board" id="mlb-board"></div>
+  <footer>
+    <p>&#169; 2026 Mock Draft Board &#8212; Projections only. Not affiliated with MLB.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Pitcher</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Catcher</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7ab3ff"></div>Infield</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#6bda92"></div>Outfield</div>
+    </div>
+  </footer>
+</div>
+
+<!-- NFL -->
+<div class="sport-panel nfl-panel visible" id="panel-nfl">
+  <header class="nfl-header"><h1 class="nfl-title">Mock<br>2026 NFL<br>Draft</h1><p class="draft-meta">Apr 23–25, 2026 &middot; Green Bay, WI</p></header>
+  <div class="draft-board" id="nfl-board"></div>
+  <footer>
+    <p>&#169; 2026 Mock Draft Board &#8212; Projections only. Not affiliated with NFL.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>QB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>RB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7ab3ff"></div>WR</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>TE/S</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>OL</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>EDGE</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>DT</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f5d060"></div>LB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f08abd"></div>CB</div>
+    </div>
+  </footer>
+</div>
+
+<!-- NHL -->
+<div class="sport-panel nhl-panel" id="panel-nhl">
+  <header class="nhl-header"><h1 class="nhl-title">Mock<br>2026 NHL<br>Draft</h1><p class="draft-meta">Jun 26–27, 2026 &middot; Los Angeles, CA</p></header>
+  <div class="draft-board" id="nhl-board"></div>
+  <footer>
+    <p>&#169; 2026 Mock Draft Board &#8212; Projections only. Not affiliated with NHL. Draft order via Tankathon (current standings).</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--nhl-blue)"></div>Center</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Wing / F</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div>Defense</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Goalie</div>
+    </div>
+  </footer>
+</div>
+
+<!-- NBA -->
+<div class="sport-panel nba-panel" id="panel-nba">
+  <header class="nba-header"><h1 class="nba-title">Mock<br>2026 NBA<br>Draft</h1><p class="draft-meta">Jun 25, 2026 &middot; Brooklyn, NY</p></header>
+  <div class="draft-board" id="nba-board"></div>
+  <footer>
+    <p>&#169; 2026 Mock Draft Board &#8212; Projections only. Not affiliated with NBA. Lottery order approximate; final order determined May 2026.</p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>PG</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--nhl-blue)"></div>SG</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--nba-orange)"></div>SF</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>PF</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>C</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ── TABS ── */
+document.querySelectorAll('.tab-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.querySelectorAll('.sport-panel').forEach(function(p) { p.classList.remove('visible'); });
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.sport).classList.add('visible');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  });
+});
+
+/* ── CARD BUILDER ── */
+function buildPickCard(p) {
+  var card = document.createElement('div');
+  var cls = 'pick';
+  if (p.top)             cls += ' top-pick';
+  if (p.round === 'R1')  cls += ' r1-pick';
+  if (p.round === 'PPI') cls += ' ppi-pick';
+  if (p.round === 'CBA') cls += ' cb-pick';
+  if (p.forfeited)       cls += ' forfeited-pick';
+  card.className = cls;
+  card.style.animationDelay = Math.min((p.pick - 1) * 0.04, 1.2) + 's';
+
+  var writeupContent = p.writeup
+    ? p.writeup
+    : '<p class="write-up-placeholder">Write-up coming soon.</p>';
+
+  card.innerHTML =
+    '<div class="pick-header">' +
+      '<div class="pick-num">' + p.pick + '</div>' +
+      '<div><div class="player-name">' + p.name + '</div>' +
+      (p.school ? '<div class="player-meta">' + p.school + '</div>' : '') +
+      '</div>' +
+      '<div class="team-cell">' + p.team + '</div>' +
+      '<div class="position pos-' + p.posClass + '">' + p.pos + '</div>' +
+      '<div class="toggle-arrow">&#9660;</div>' +
+    '</div>' +
+    '<div class="write-up-panel"><div class="write-up-inner">' + writeupContent + '</div></div>';
+
+  if (!p.forfeited) {
+    var hdr   = card.querySelector('.pick-header');
+    var panel = card.querySelector('.write-up-panel');
+    hdr.addEventListener('click', function() {
+      if (card.classList.contains('open')) {
+        card.classList.remove('open');
+        panel.style.maxHeight = '0';
+      } else {
+        card.classList.add('open');
+        panel.style.maxHeight = panel.scrollHeight + 'px';
+        requestAnimationFrame(function() {
+          requestAnimationFrame(function() { panel.style.maxHeight = 'none'; });
+        });
+      }
+    });
+  }
+  return card;
+}
+
+/* ══ MLB DATA ══ */
+const ROUND_META = {
+  R1:  { label:"Round 1",                            cls:"r1",   note:"" },
+  PPI: { label:"Prospect Promotion Incentive Picks", cls:"rppi", note:"" },
+  CBA: { label:"Competitive Balance Round A",        cls:"rcba", note:"" },
+};
+
+const picks = [
+  // ── ROUND 1 ────────────────────────────────────────────────────────────
+  { pick:1, round:"R1", top:true,
+    name:"Roch Cholowsky", school:"UCLA", type:"COL", pos:"SS", posClass:"IF", team:"Chicago White Sox",
+    writeup:``,
+    sources:"MLB Pipeline · Baseball America · ESPN · Sox Machine" },
+
+  { pick:2, round:"R1", top:true,
+    name:"Grady Emerson", school:"Fort Worth Christian HS (TX)", type:"HS", pos:"SS", posClass:"IF", team:"Tampa Bay Rays",
+    writeup:``,
+    sources:"ESPN · Baseball America · MLB Pipeline · Sox Machine" },
+
+  { pick:3, round:"R1", top:true,
+    name:"Justin Lebron", school:"Alabama", type:"COL", pos:"SS", posClass:"IF", team:"Minnesota Twins",
+    writeup:``,
+    sources:"Baseball America · ESPN · Just Baseball · Puckett's Pond" },
+
+  { pick:4, round:"R1", top:true,
+    name:"Drew Burress", school:"Georgia Tech", type:"COL", pos:"OF", posClass:"OF", team:"San Francisco Giants",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline · SI · Just Baseball" },
+
+  { pick:5, round:"R1", top:true,
+    name:"Derek Curiel", school:"LSU", type:"COL", pos:"OF", posClass:"OF", team:"Pittsburgh Pirates",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · Just Baseball · MLB.com" },
+
+  { pick:6, round:"R1",
+    name:"Jacob Lombard", school:"Gulliver Prep (FL)", type:"HS", pos:"SS", posClass:"IF", team:"Kansas City Royals",
+    writeup:``,
+    sources:"MLB Pipeline · Baseball America · Bleacher Report" },
+
+  { pick:7, round:"R1",
+    name:"Cameron Flukey", school:"Coastal Carolina", type:"COL", pos:"RHP", posClass:"P", team:"Baltimore Orioles",
+    writeup:``,
+    sources:"ESPN · Sox Machine · Just Baseball · On3 · Bleacher Report" },
+
+  { pick:8, round:"R1",
+    name:"Jackson Flora", school:"UC Santa Barbara", type:"COL", pos:"RHP", posClass:"P", team:"Athletics",
+    writeup:``,
+    sources:"ESPN · Baseball America · Sox Machine · Federal Baseball" },
+
+  { pick:9, round:"R1",
+    name:"Carson Bolemon", school:"Southside Christian HS (SC)", type:"HS", pos:"LHP", posClass:"P", team:"Atlanta Braves",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · Baseball America" },
+
+  { pick:10, round:"R1",
+    name:"Vahn Lackey", school:"Georgia Tech", type:"COL", pos:"C", posClass:"C", team:"Colorado Rockies",
+    writeup:``,
+    sources:"ESPN · MLB.com · Bleacher Report" },
+
+  { pick:11, round:"R1",
+    name:"Liam Peterson", school:"Florida", type:"COL", pos:"RHP", posClass:"P", team:"Washington Nationals",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline · FanGraphs · Bleacher Report · Sox Machine" },
+
+  { pick:12, round:"R1",
+    name:"AJ Gracia", school:"Virginia", type:"COL", pos:"OF", posClass:"OF", team:"Los Angeles Angels",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · MLB.com" },
+
+  { pick:13, round:"R1",
+    name:"Sawyer Strosnider", school:"TCU", type:"COL", pos:"OF", posClass:"OF", team:"St. Louis Cardinals",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline · Bleacher Report · Sox Machine" },
+
+  { pick:14, round:"R1",
+    name:"Chris Hacopian", school:"Texas A&M", type:"COL", pos:"SS", posClass:"IF", team:"Miami Marlins",
+    writeup:``,
+    sources:"ESPN · Prospects Live · Baseball America · Bleacher Report" },
+
+  { pick:15, round:"R1",
+    name:"Tyler Spangler", school:"De La Salle HS (CA)", type:"HS", pos:"SS", posClass:"IF", team:"Arizona Diamondbacks",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline · FanGraphs · Bleacher Report" },
+
+  { pick:16, round:"R1",
+    name:"Gio Rojas", school:"Stoneman Douglas HS (FL)", type:"HS", pos:"LHP", posClass:"P", team:"Texas Rangers",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline · Baseball America" },
+
+  { pick:17, round:"R1",
+    name:"Ace Reese", school:"Mississippi State", type:"COL", pos:"3B", posClass:"IF", team:"Houston Astros",
+    writeup:``,
+    sources:"MLB Pipeline · Bleacher Report · ESPN" },
+
+  { pick:18, round:"R1",
+    name:"Eric Becker", school:"Virginia", type:"COL", pos:"SS", posClass:"IF", team:"Cincinnati Reds",
+    writeup:``,
+    sources:"ESPN · Bleacher Report" },
+
+  { pick:19, round:"R1",
+    name:"Tyler Bell", school:"Kentucky", type:"COL", pos:"SS", posClass:"IF", team:"Cleveland Guardians",
+    writeup:``,
+    sources:"ESPN · Bleacher Report" },
+
+  { pick:20, round:"R1",
+    name:"Chris Rembert", school:"Auburn", type:"COL", pos:"2B", posClass:"IF", team:"Boston Red Sox",
+    writeup:``,
+    sources:"Bleacher Report · MLB.com · ESPN · Just Baseball" },
+
+  { pick:21, round:"R1",
+    name:"Logan Schmidt", school:"Ganesha HS (CA)", type:"HS", pos:"LHP", posClass:"P", team:"San Diego Padres",
+    writeup:``,
+    sources:"ESPN · FanGraphs · MLB Pipeline" },
+
+  { pick:22, round:"R1",
+    name:"Caden Sorrell", school:"Texas A&M", type:"COL", pos:"OF", posClass:"OF", team:"Detroit Tigers",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · Just Baseball" },
+
+  { pick:23, round:"R1",
+    name:"Gabe Gaeckle", school:"Arkansas", type:"COL", pos:"RHP", posClass:"P", team:"Chicago Cubs",
+    writeup:``,
+    sources:"Bleacher Report · Baseball America · Sox Machine" },
+
+  { pick:24, round:"R1",
+    name:"Tegan Kuhns", school:"Tennessee", type:"COL", pos:"RHP", posClass:"P", team:"Seattle Mariners",
+    writeup:``,
+    sources:"Bleacher Report · Baseball America · Sox Machine" },
+
+  { pick:25, round:"R1",
+    name:"Eric Booth Jr.", school:"Oak Grove HS (MS)", type:"HS", pos:"OF", posClass:"OF", team:"Milwaukee Brewers",
+    writeup:``,
+    sources:"MLB Pipeline · Bleacher Report · Baseball America" },
+
+
+  // ── PPI PICKS ─────────────────────────────────────────────────────────────
+  { pick:26, round:"PPI",
+    note:"PPI pick — Drake Baldwin won the 2025 NL Rookie of the Year Award.",
+    name:"Joey Volchko", school:"Georgia", type:"COL", pos:"RHP", posClass:"P", team:"Atlanta Braves",
+    writeup:``,
+    sources:"Bleacher Nation · MLB Pipeline · Bleacher Report" },
+
+  { pick:27, round:"PPI",
+    note:"First pick moved back 10 spots — Mets exceeded the top luxury-tax threshold.",
+    name:"Ryder Helfrick", school:"Arkansas", type:"COL", pos:"C", posClass:"C", team:"New York Mets",
+    writeup:``,
+    sources:"Bleacher Report · Bleacher Nation · Baseball America" },
+
+  { pick:28, round:"PPI",
+    note:"PPI pick — Hunter Brown finished top-3 in 2025 AL Cy Young Award voting.",
+    name:"Blake Bowen", school:"JSerra Catholic HS (CA)", type:"HS", pos:"OF", posClass:"OF", team:"Houston Astros",
+    writeup:``,
+    sources:"MLB Pipeline · Bleacher Report · ESPN · Baseball America" },
+
+
+  // ── COMPETITIVE BALANCE ROUND A ───────────────────────────────────────────
+  { pick:"CBA-1", round:"CBA",
+    note:"CBA pick.",
+    name:"Gavin Grahovac", school:"Texas A&M", type:"COL", pos:"3B", posClass:"IF", team:"Cleveland Guardians",
+    writeup:``,
+    sources:"Bleacher Nation · Bleacher Report · Baseball America" },
+
+  { pick:"CBA-2", round:"CBA",
+    note:"CBA pick.",
+    name:"Aiden Robbins", school:"Texas", type:"COL", pos:"OF", posClass:"OF", team:"Kansas City Royals",
+    writeup:``,
+    sources:"Bleacher Report · MLB Pipeline" },
+
+  { pick:"CBA-3", round:"CBA",
+    note:"CBA pick.",
+    name:"Maddox Molony", school:"Oregon", type:"COL", pos:"SS", posClass:"IF", team:"Arizona Diamondbacks",
+    writeup:``,
+    sources:"Baseball America · MLB Pipeline · Bleacher Report" },
+
+  { pick:"CBA-4", round:"CBA",
+    note:"CBA pick.",
+    name:"Kevin Roberts Jr.", school:"Jackson Prep HS (MS)", type:"HS", pos:"OF", posClass:"OF", team:"St. Louis Cardinals",
+    writeup:``,
+    sources:"ESPN · MLB Pipeline" },
+
+  { pick:"CBA-5", round:"CBA",
+    note:"CBA pick — acquired from Baltimore Orioles.",
+    name:"Tommy LaPour", school:"TCU", type:"COL", pos:"RHP", posClass:"P", team:"Tampa Bay Rays",
+    writeup:``,
+    sources:"Bleacher Report · Baseball America · MLB Pipeline" },
+
+  { pick:"CBA-6", round:"CBA",
+    note:"CBA pick.",
+    name:"Coleman Borthwick", school:"South Walton HS (FL)", type:"HS", pos:"RHP", posClass:"P", team:"Pittsburgh Pirates",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · Baseball America" },
+
+  { pick:"CBA-7", round:"CBA",
+    note:"First pick moved back 10 spots — Yankees exceeded the top luxury-tax threshold.",
+    name:"Aiden Ruiz", school:"The Stony Brook School (NY)", type:"HS", pos:"SS", posClass:"IF", team:"New York Yankees",
+    writeup:``,
+    sources:"Bleacher Report · ESPN" },
+
+  { pick:"CBA-8", round:"CBA",
+    note:"First pick moved back 10 spots — Phillies exceeded the top luxury-tax threshold.",
+    name:"Jensen Hirschkorn", school:"Kingsburg HS (CA)", type:"HS", pos:"RHP", posClass:"P", team:"Philadelphia Phillies",
+    writeup:``,
+    sources:"ESPN · Bleacher Report · MLB Pipeline" },
+
+  { pick:"CBA-9", round:"CBA",
+    note:"CBA pick.",
+    name:"Zion Rose", school:"Louisville", type:"COL", pos:"OF", posClass:"OF", team:"Colorado Rockies",
+    writeup:``,
+    sources:"FloBaseball · Bleacher Report · Baseball America" },
+
+  { pick:"CBA-10", round:"CBA",
+    note:"Second pick.",
+    name:"Ryan Lynch", school:"North Carolina", type:"COL", pos:"RHP", posClass:"P", team:"Colorado Rockies",
+    writeup:``,
+    sources:"Bleacher Report · Baseball America · MLB Pipeline" },
+
+  { pick:"CBA-11", round:"CBA",
+    note:"First pick moved back 10 spots — Blue Jays exceeded the top luxury-tax threshold.",
+    name:"Trevor Condon", school:"Etowah HS (GA)", type:"HS", pos:"OF", posClass:"OF", team:"Toronto Blue Jays",
+    writeup:``,
+    sources:"Bleacher Report · Bleacher Nation · MLB Pipeline" },
+
+  { pick:"CBA-12", round:"CBA",
+    note:"First pick moved back 10 spots — Dodgers exceeded the top luxury-tax threshold.",
+    name:"Joseph Contreras", school:"Blessed Trinity Catholic HS (GA)", type:"HS", pos:"RHP", posClass:"P", team:"Los Angeles Dodgers",
+    writeup:``,
+    sources:"Bleacher Report · MLB Pipeline" },
+
+];
+
+(function() {
+  var board = document.getElementById('mlb-board');
+  var lastRound = null;
+  picks.forEach(function(p) {
+    if (p.round !== lastRound) {
+      lastRound = p.round;
+      var meta = ROUND_META[p.round];
+      var rh = document.createElement('div');
+      rh.className = 'round-header';
+      rh.innerHTML = '<div class="round-label ' + meta.cls + '">' + meta.label + '</div><div class="round-line"></div>';
+      board.appendChild(rh);
+    }
+    board.appendChild(buildPickCard(p));
+  });
+})();
+
+/* ══ NFL DATA ══ */
+const nflPicks = [
+  { pick:1, top:true,
+    name:"Fernando Mendoza", school:"Indiana", pos:"QB", posClass:"QB", team:"Las Vegas Raiders",
+    writeup:`` },
+
+  { pick:2, top:true,
+    name:"Arvell Reese", school:"Ohio State", pos:"LB", posClass:"LB", team:"New York Jets",
+    writeup:`` },
+
+  { pick:3, top:true,
+    name:"Francis Mauigoa", school:"Miami (FL)", pos:"OT", posClass:"OL", team:"Arizona Cardinals",
+    writeup:`` },
+
+  { pick:4,
+    name:"Rueben Bain Jr.", school:"Miami (FL)", pos:"EDGE", posClass:"EDGE", team:"Tennessee Titans",
+    writeup:`` },
+
+  { pick:5,
+    name:"Caleb Downs", school:"Ohio State", pos:"S", posClass:"S", team:"New York Giants",
+    writeup:`` },
+
+  { pick:6,
+    name:"Spencer Fano", school:"Utah", pos:"OT", posClass:"OL", team:"Cleveland Browns",
+    writeup:`` },
+
+  { pick:7,
+    name:"Jermod McCoy", school:"Tennessee", pos:"CB", posClass:"CB", team:"Washington Commanders",
+    writeup:`` },
+
+  { pick:8,
+    name:"David Bailey", school:"Texas Tech", pos:"EDGE", posClass:"EDGE", team:"New Orleans Saints",
+    writeup:`` },
+
+  { pick:9,
+    name:"Jeremiyah Love", school:"Notre Dame", pos:"RB", posClass:"RB", team:"Kansas City Chiefs",
+    writeup:`` },
+
+  { pick:10,
+    name:"Keldric Faulk", school:"Auburn", pos:"EDGE", posClass:"EDGE", team:"Cincinnati Bengals",
+    writeup:`` },
+
+  { pick:11,
+    name:"Mansoor Delane", school:"LSU", pos:"CB", posClass:"CB", team:"Miami Dolphins",
+    writeup:`` },
+
+  { pick:12,
+    name:"Sonny Styles", school:"Ohio State", pos:"LB", posClass:"LB", team:"Dallas Cowboys",
+    writeup:`` },
+
+  { pick:13,
+    name:"Makai Lemon", school:"USC", pos:"WR", posClass:"WR", team:"Los Angeles Rams (via ATL)",
+    writeup:`` },
+
+  { pick:14,
+    name:"Garrett Nussmeier", school:"LSU", pos:"QB", posClass:"QB", team:"Baltimore Ravens",
+    writeup:`` },
+
+  { pick:15,
+    name:"Cashius Howell", school:"Texas A&M", pos:"EDGE", posClass:"EDGE", team:"Tampa Bay Buccaneers",
+    writeup:`` },
+
+  { pick:16,
+    name:"Carnell Tate", school:"Ohio State", pos:"WR", posClass:"WR", team:"New York Jets (via IND)",
+    writeup:`` },
+
+  { pick:17,
+    name:"Monroe Freeling", school:"Georgia", pos:"OT", posClass:"OL", team:"Detroit Lions",
+    writeup:`` },
+
+  { pick:18,
+    name:"Brandon Cisse", school:"South Carolina", pos:"CB", posClass:"CB", team:"Minnesota Vikings",
+    writeup:`` },
+
+  { pick:19,
+    name:"Akheem Mesidor", school:"Miami (FL)", pos:"EDGE", posClass:"EDGE", team:"Carolina Panthers",
+    writeup:`` },
+
+  { pick:20,
+    name:"CJ Allen", school:"Georgia", pos:"LB", posClass:"LB", team:"Dallas Cowboys (via GB)",
+    writeup:`` },
+
+  { pick:21,
+    name:"Ty Simpson", school:"Alabama", pos:"QB", posClass:"QB", team:"Pittsburgh Steelers",
+    writeup:`` },
+
+  { pick:22,
+    name:"Vega Ioane", school:"Penn State", pos:"OL", posClass:"OL", team:"Los Angeles Chargers",
+    writeup:`` },
+
+  { pick:23,
+    name:"Drew Allar", school:"Penn State", pos:"QB", posClass:"QB", team:"Philadelphia Eagles",
+    writeup:`` },
+
+  { pick:24,
+    name:"Denzel Boston", school:"Washington", pos:"WR", posClass:"WR", team:"Cleveland Browns (via JAX)",
+    writeup:`` },
+
+  { pick:25,
+    name:"Caleb Banks", school:"Florida", pos:"DT", posClass:"DT", team:"Chicago Bears",
+    writeup:`` },
+
+  { pick:26,
+    name:"Anthony Hill Jr.", school:"Texas", pos:"LB", posClass:"LB", team:"Buffalo Bills",
+    writeup:`` },
+
+  { pick:27,
+    name:"KC Concepcion", school:"Texas A&M", pos:"WR", posClass:"WR", team:"San Francisco 49ers",
+    writeup:`` },
+
+  { pick:28,
+    name:"Kadyn Proctor", school:"Alabama", pos:"OT", posClass:"OL", team:"Houston Texans",
+    writeup:`` },
+
+  { pick:29,
+    name:"Colton Hood", school:"Tennessee", pos:"CB", posClass:"CB", team:"Los Angeles Rams (pick 2)",
+    writeup:`` },
+
+  { pick:30,
+    name:"Kenyon Sadiq", school:"Oregon", pos:"TE", posClass:"TE", team:"Denver Broncos",
+    writeup:`` },
+
+  { pick:31,
+    name:"Caleb Lomu", school:"Utah", pos:"OT", posClass:"OL", team:"New England Patriots",
+    writeup:`` },
+
+  { pick:32,
+    name:"Avieon Terrell", school:"Clemson", pos:"CB", posClass:"CB", team:"Seattle Seahawks",
+    writeup:`` },
+];
+
+(function() {
+  var board = document.getElementById('nfl-board');
+  var rh = document.createElement('div');
+  rh.className = 'round-header';
+  rh.innerHTML = '<div class="round-label nfl-r1">Round 1</div><div class="round-line"></div>';
+  board.appendChild(rh);
+  nflPicks.forEach(function(p) { board.appendChild(buildPickCard(p)); });
+})();
+
+/* ══ NHL DATA ══ */
+const nhlPicks = [
+  { pick:1,  top:true,  name:"Ivar Stenberg",      school:"Frölunda HC — SHL",              pos:"LW/RW", posClass:"hW", team:"Vancouver Canucks",               writeup:`` },
+  { pick:2,  top:true,  name:"Gavin McKenna",       school:"Penn State — NCAA",               pos:"LW",    posClass:"hW", team:"St. Louis Blues",                  writeup:`` },
+  { pick:3,  top:true,  name:"Keaton Verhoeff",     school:"North Dakota — NCAA",             pos:"RD",    posClass:"hD", team:"New York Rangers",                 writeup:`` },
+  { pick:4,  top:true,  name:"Tynan Lawrence",      school:"Boston University — NCAA",        pos:"C",     posClass:"hC", team:"Calgary Flames (via VGK)",          writeup:`` },
+  { pick:5,             name:"Chase Reid",          school:"Soo Greyhounds — OHL",            pos:"RD",    posClass:"hD", team:"Winnipeg Jets",                    writeup:`` },
+  { pick:6,             name:"Caleb Malhotra",      school:"Brantford Bulldogs — OHL",        pos:"C",     posClass:"hC", team:"Chicago Blackhawks (via FLA)",      writeup:`` },
+  { pick:7,             name:"Ethan Belchetz",      school:"Windsor Spitfires — OHL",         pos:"LW",    posClass:"hW", team:"New Jersey Devils",                writeup:`` },
+  { pick:8,             name:"Alberts Smits",       school:"Jukurit — Liiga",                 pos:"LD",    posClass:"hD", team:"Nashville Predators",              writeup:`` },
+  { pick:9,             name:"Carson Carels",       school:"Prince George Cougars — WHL",     pos:"LD",    posClass:"hD", team:"San Jose Sharks",                  writeup:`` },
+  { pick:10,            name:"Viggo Björck",        school:"Djurgårdens IF — SHL",            pos:"C/RW",  posClass:"hC", team:"Florida Panthers",                 writeup:`` },
+  { pick:11,            name:"Ryan Lin",            school:"Vancouver Giants — WHL",           pos:"RD",    posClass:"hD", team:"Los Angeles Kings",                writeup:`` },
+  { pick:12,            name:"Daxon Rudolph",       school:"Prince Albert Raiders — WHL",     pos:"RD",    posClass:"hD", team:"Philadelphia Flyers",              writeup:`` },
+  { pick:13,            name:"Adam Novotný",        school:"Peterborough Petes — OHL",        pos:"LW/RW", posClass:"hW", team:"Washington Capitals",              writeup:`` },
+  { pick:14,            name:"Oliver Suvanto",      school:"Tappara — Liiga",                 pos:"C",     posClass:"hC", team:"Boston Bruins (via TOR)",           writeup:`` },
+  { pick:15,            name:"Pick Forfeited",      school:"",                                pos:"—",     posClass:"hW", team:"Ottawa Senators",                  writeup:``, forfeited:true },
+  { pick:16,            name:"Xavier Villeneuve",   school:"Blainville-Boisbriand — QMJHL",  pos:"LD",    posClass:"hD", team:"Columbus Blue Jackets",            writeup:`` },
+  { pick:17,            name:"Oscar Hemming",       school:"Boston College — NCAA",           pos:"F",     posClass:"hW", team:"San Jose Sharks (via EDM)",         writeup:`` },
+  { pick:18,            name:"Elton Hermansson",    school:"MoDo Hockey — HA",                pos:"RW/LW", posClass:"hW", team:"Utah Mammoth",                     writeup:`` },
+  { pick:19,            name:"Marcus Nordmark",     school:"Djurgårdens IF — U20",            pos:"RW",    posClass:"hW", team:"Anaheim Ducks",                    writeup:`` },
+  { pick:20,            name:"Malte Gustafsson",    school:"HV71 — U20 Nationell",            pos:"LD",    posClass:"hD", team:"Seattle Kraken",                   writeup:`` },
+  { pick:21,            name:"JP Hurlbert",         school:"Kamloops Blazers — WHL",          pos:"F",     posClass:"hW", team:"New York Islanders",               writeup:`` },
+  { pick:22,            name:"Juho Piiparinen",     school:"Tappara — Liiga",                 pos:"RD",    posClass:"hD", team:"Boston Bruins",                    writeup:`` },
+  { pick:23,            name:"Yegor Shilov",        school:"Victoriaville Tigres — QMJHL",   pos:"C",     posClass:"hC", team:"Buffalo Sabres",                   writeup:`` },
+  { pick:24,            name:"Mathis Preston",      school:"Vancouver Giants — WHL",           pos:"F",     posClass:"hW", team:"Detroit Red Wings",                writeup:`` },
+  { pick:25,            name:"Ilya Morozov",        school:"Miami (Ohio) — NCAA",             pos:"F",     posClass:"hW", team:"Pittsburgh Penguins",              writeup:`` },
+  { pick:26,            name:"Nikita Klepov",       school:"Saginaw Spirit — OHL",            pos:"F",     posClass:"hW", team:"Montreal Canadiens",               writeup:`` },
+  { pick:27,            name:"William Håkansson",   school:"Luleå HF — SHL",                  pos:"LD",    posClass:"hD", team:"Vancouver Canucks (via MIN)",       writeup:`` },
+  { pick:28,            name:"Ryan Roobroeck",      school:"Niagara IceDogs — OHL",           pos:"C",     posClass:"hC", team:"New York Rangers (via DAL)",        writeup:`` },
+  { pick:29,            name:"Maddox Dagenais",     school:"Quebec Remparts — QMJHL",        pos:"C",     posClass:"hC", team:"Calgary Flames (via VGK)",          writeup:`` },
+  { pick:30,            name:"Alexander Command",   school:"Örebro HK — U20 Nationell",      pos:"C",     posClass:"hC", team:"Carolina Hurricanes",              writeup:`` },
+  { pick:31,            name:"Giorgos Pantelas",    school:"Brandon Wheat Kings — WHL",      pos:"RD",    posClass:"hD", team:"Seattle Kraken (via TB)",           writeup:`` },
+  { pick:32,            name:"Brooks Rogowski",     school:"Oshawa Generals — OHL",          pos:"C",     posClass:"hC", team:"New York Islanders (via COL)",      writeup:`` },
+];
+
+(function() {
+  var board = document.getElementById('nhl-board');
+  var rh = document.createElement('div');
+  rh.className = 'round-header';
+  rh.innerHTML = '<div class="round-label nhl-r1">Round 1</div><div class="round-line"></div>';
+  board.appendChild(rh);
+  nhlPicks.forEach(function(p) { board.appendChild(buildPickCard(p)); });
+})();
+
+/* ══ NBA DATA ══ */
+const nbaPicks = [
+  { pick:1,  top:true,  name:"Darryn Peterson",    school:"Kansas — Freshman",               pos:"SG",    posClass:"bSG", team:"Atlanta Hawks (via NOP)",           writeup:`` },
+  { pick:2,  top:true,  name:"AJ Dybantsa",        school:"BYU — Freshman",                  pos:"SF",    posClass:"bSF", team:"Washington Wizards",               writeup:`` },
+  { pick:3,  top:true,  name:"Cameron Boozer",     school:"Duke — Freshman",                 pos:"PF",    posClass:"bPF", team:"Dallas Mavericks",                 writeup:`` },
+  { pick:4,  top:true,  name:"Caleb Wilson",       school:"North Carolina — Freshman",       pos:"PF",    posClass:"bPF", team:"Brooklyn Nets",                    writeup:`` },
+  { pick:5,  top:true,  name:"Kingston Flemings",  school:"Houston — Freshman",              pos:"PG",    posClass:"bPG", team:"Sacramento Kings",                 writeup:`` },
+  { pick:6,             name:"Keaton Wagler",      school:"Illinois — Freshman",             pos:"SG",    posClass:"bSG", team:"LA Clippers (via IND)",             writeup:`` },
+  { pick:7,             name:"Mikel Brown Jr.",    school:"Louisville — Freshman",           pos:"PG",    posClass:"bPG", team:"Utah Jazz",                         writeup:`` },
+  { pick:8,             name:"Nate Ament",         school:"Tennessee — Freshman",            pos:"SF",    posClass:"bSF", team:"Memphis Grizzlies",                writeup:`` },
+  { pick:9,             name:"Jayden Quaintance",  school:"Kentucky — Freshman",             pos:"PF",    posClass:"bPF", team:"Milwaukee Bucks",                  writeup:`` },
+  { pick:10,            name:"Hannes Steinbach",   school:"Washington (Germany) — Int'l",    pos:"C",     posClass:"bC",  team:"Chicago Bulls",                    writeup:`` },
+  { pick:11,            name:"Braylon Mullins",    school:"UConn — Freshman",                pos:"SG",    posClass:"bSG", team:"San Antonio Spurs (via ATL)",       writeup:`` },
+  { pick:12,            name:"Koa Peat",           school:"Arizona — Freshman",              pos:"PF",    posClass:"bPF", team:"Charlotte Hornets",                writeup:`` },
+  { pick:13,            name:"Chris Cenac Jr.",    school:"Houston — Junior",                pos:"PF",    posClass:"bPF", team:"OKC Thunder (via LAC)",             writeup:`` },
+  { pick:14,            name:"Darius Acuff Jr.",   school:"Arkansas — Freshman",             pos:"PG",    posClass:"bPG", team:"Portland Trail Blazers",           writeup:`` },
+  { pick:15,            name:"Brayden Burries",    school:"Arizona — Freshman",              pos:"SG",    posClass:"bSG", team:"Miami Heat",                       writeup:`` },
+  { pick:16,            name:"Cameron Carr",       school:"Baylor — Sophomore",              pos:"SG",    posClass:"bSG", team:"Golden State Warriors",            writeup:`` },
+  { pick:17,            name:"Labaron Philon",     school:"Alabama — Sophomore",             pos:"PG",    posClass:"bPG", team:"Memphis Grizzlies (via ORL)",       writeup:`` },
+  { pick:18,            name:"Thomas Haugh",       school:"Florida — Freshman",              pos:"SF",    posClass:"bSF", team:"OKC Thunder (via PHI)",             writeup:`` },
+  { pick:19,            name:"Karim Lopez",        school:"NZ Breakers — Int'l",             pos:"SF",    posClass:"bSF", team:"Charlotte Hornets (via PHX)",       writeup:`` },
+  { pick:20,            name:"Bennett Stirtz",     school:"Iowa — Senior",                   pos:"PG",    posClass:"bPG", team:"Toronto Raptors",                  writeup:`` },
+  { pick:21,            name:"Amari Allen",        school:"Alabama — Freshman",              pos:"SF",    posClass:"bSF", team:"Detroit Pistons (via MIN)",          writeup:`` },
+  { pick:22,            name:"Patrick Ngongba II", school:"Duke — Freshman",                 pos:"C",     posClass:"bC",  team:"Los Angeles Lakers",               writeup:`` },
+  { pick:23,            name:"Aday Mara",          school:"Michigan — Sophomore",            pos:"C",     posClass:"bC",  team:"Atlanta Hawks (via CLE)",           writeup:`` },
+  { pick:24,            name:"Yaxel Lendeborg",    school:"Michigan — Senior",               pos:"PF",    posClass:"bPF", team:"Philadelphia 76ers (via HOU)",      writeup:`` },
+  { pick:25,            name:"Isaiah Evans",       school:"Duke — Freshman",                 pos:"SF",    posClass:"bSF", team:"Denver Nuggets",                   writeup:`` },
+  { pick:26,            name:"Henri Veesaar",      school:"North Carolina — Sophomore",      pos:"C",     posClass:"bC",  team:"Cleveland Cavaliers",              writeup:`` },
+  { pick:27,            name:"Christian Anderson", school:"Texas Tech — Freshman",           pos:"PG",    posClass:"bPG", team:"New York Knicks",                  writeup:`` },
+  { pick:28,            name:"Meleek Thomas",      school:"Arkansas — Freshman",             pos:"SG",    posClass:"bSG", team:"Minnesota Timberwolves",           writeup:`` },
+  { pick:29,            name:"Dame Sarr",          school:"Duke — Freshman",                 pos:"SG",    posClass:"bSG", team:"Boston Celtics",                   writeup:`` },
+  { pick:30,            name:"Tounde Yessoufou",   school:"Baylor — Sophomore",              pos:"SF",    posClass:"bSF", team:"OKC Thunder",                      writeup:`` },
+];
+
+(function() {
+  var board = document.getElementById('nba-board');
+  var rh = document.createElement('div');
+  rh.className = 'round-header';
+  rh.innerHTML = '<div class="round-label nba-r1">Round 1</div><div class="round-line"></div>';
+  board.appendChild(rh);
+  nbaPicks.forEach(function(p) { board.appendChild(buildPickCard(p)); });
+})();
+
+</script>
+</body>
+</html>
